@@ -1,24 +1,27 @@
 /**
  * Volume Monitor property inspector.
  *
- * - Global panel (opened from the action list): excluded apps, default
- *   volume, poll interval, notify on switch, status readout.
- * - Action panel (opened on a placed action): knob slot for app knobs,
- *   plus the same status readout.
+ * - Global settings (excluded apps, default volume, poll interval, notify
+ *   on switch) + status readout.
+ * - For an app-knob action: the knob-slot selector.
  *
- * Global settings live in the plugin's globalSettings; the plugin is the
- * owner of volumeMemory/knobSlots, so this page preserves those members
- * whenever it writes the global blob.
+ * Stream Deck 7.x connects the property inspector by invoking the global
+ * connectElgatoStreamDeckSocket(port, uuid, event, info, actionInfo) once
+ * the DOM has loaded (official SDK contract — no URL query params).
+ *
+ * Global settings live in the plugin's globalSettings; the plugin owns
+ * volumeMemory/knobSlots, so this page preserves those members whenever it
+ * writes the global blob.
  */
 'use strict';
 
-const params = new URLSearchParams(location.search);
-const port = params.get('port');
-const pluginUUID = params.get('pluginUUID');
-const registerEvent = params.get('registerEvent') || 'registerPropertyInspector';
+const APP_KNOB_ACTION = 'com.tech127x.volume-monitor.appknob';
 
 let ws = null;
-let actionContext = null; // set when this PI belongs to a placed action
+let started = false;
+let pluginUUID = ''; // the plugin's UUID (from the info payload)
+let actionContext = null; // action instance context (null = global panel)
+let actionUuid = ''; // action type UUID ('' = global panel)
 let globalSettings = null; // last known full blob (keeps volumeMemory/knobSlots)
 
 const $ = (id) => document.getElementById(id);
@@ -27,13 +30,33 @@ const $ = (id) => document.getElementById(id);
 // Websocket plumbing
 // ---------------------------------------------------------------------------
 
-function connect() {
+function start(port, uuid, registerEvent, info, actionInfo) {
+  if (started) return;
+  started = true;
+
+  try {
+    const infoObj = JSON.parse(info || '{}');
+    pluginUUID = (infoObj.plugin && infoObj.plugin.uuid) || uuid;
+  } catch {
+    pluginUUID = uuid;
+  }
+  try {
+    const ai = JSON.parse(actionInfo || '');
+    if (ai && ai.context) {
+      actionContext = ai.context;
+      actionUuid = ai.action || '';
+    }
+  } catch {
+    // No action info -> this is the plugin-level (global) panel.
+  }
+
   ws = new WebSocket('ws://127.0.0.1:' + port);
   ws.onopen = () => {
-    ws.send(JSON.stringify({ event: registerEvent, uuid: pluginUUID }));
-    // Ask for the global blob; the response's context tells us whether this
-    // PI is the global panel or an action panel.
+    ws.send(JSON.stringify({ event: registerEvent, uuid }));
     ws.send(JSON.stringify({ event: 'getGlobalSettings', context: pluginUUID }));
+    if (actionContext) {
+      ws.send(JSON.stringify({ event: 'getSettings', context: actionContext }));
+    }
   };
   ws.onmessage = (ev) => {
     let msg;
@@ -42,14 +65,20 @@ function connect() {
     } catch {
       return;
     }
-    if (msg.event === 'didReceiveGlobalSettings') onGlobalSettings(msg);
-    else if (msg.event === 'didReceiveSettings') onActionSettings(msg);
-    else if (msg.event === 'sendToPropertyInspector') onPluginMessage(msg.payload);
-  };
-  ws.onclose = () => {
-    setTimeout(connect, 1000);
+    if (msg.event === 'didReceiveGlobalSettings') {
+      onGlobalSettings((msg.payload && msg.payload.settings) || {});
+    } else if (msg.event === 'didReceiveSettings') {
+      onActionSettings(msg);
+    } else if (msg.event === 'sendToPropertyInspector') {
+      onPluginMessage(msg.payload);
+    }
   };
 }
+
+/** Official SDK entry point — invoked by Stream Deck after the DOM loads. */
+window.connectElgatoStreamDeckSocket = (port, uuid, event, info, actionInfo) => {
+  start(port, uuid, event, info, actionInfo);
+};
 
 function send(obj) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
@@ -59,17 +88,15 @@ function send(obj) {
 // Global settings
 // ---------------------------------------------------------------------------
 
-function onGlobalSettings(msg) {
-  globalSettings = msg.payload && msg.payload.settings ? msg.payload.settings : {};
-  const isGlobalPanel = msg.context === pluginUUID;
-  if (!isGlobalPanel) {
-    actionContext = msg.context;
-    $('action-heading').style.display = '';
-    $('row-knob').style.display = '';
-    $('row-knob-save').style.display = '';
-    send({ event: 'getSettings', context: actionContext });
-  }
+function onGlobalSettings(settings) {
+  globalSettings = settings;
   populateGlobal(globalSettings);
+
+  const isActionPanel = !!actionContext;
+  const isAppKnob = actionUuid === APP_KNOB_ACTION;
+  $('action-heading').style.display = isActionPanel ? '' : 'none';
+  $('row-knob').style.display = isAppKnob ? '' : 'none';
+  $('row-knob-save').style.display = isAppKnob ? '' : 'none';
 }
 
 function populateGlobal(s) {
@@ -111,7 +138,12 @@ function onActionSettings(msg) {
 function saveAction() {
   if (!actionContext) return;
   const knob = Number($('knobSlot').value) || 0;
-  send({ event: 'setSettings', context: actionContext, payload: { knob } });
+  send({
+    event: 'setSettings',
+    action: actionUuid,
+    context: actionContext,
+    payload: { knob },
+  });
   $('btnSaveAction').textContent = 'Saved';
   setTimeout(() => ($('btnSaveAction').textContent = 'Save action settings'), 1200);
 }
@@ -120,8 +152,17 @@ function saveAction() {
 // Status panel
 // ---------------------------------------------------------------------------
 
+function piContext() {
+  return actionContext || pluginUUID;
+}
+
 function requestState() {
-  send({ event: 'sendToPlugin', context: actionContext || pluginUUID, payload: { type: 'getState' } });
+  send({
+    event: 'sendToPlugin',
+    action: actionUuid || '',
+    context: piContext(),
+    payload: { type: 'getState' },
+  });
 }
 
 function onPluginMessage(payload) {
@@ -141,11 +182,19 @@ function onPluginMessage(payload) {
 $('btnSaveGlobal').addEventListener('click', saveGlobal);
 $('btnSaveAction').addEventListener('click', saveAction);
 $('btnRefresh').addEventListener('click', () => {
-  send({ event: 'sendToPlugin', context: actionContext || pluginUUID, payload: { type: 'refresh' } });
+  send({
+    event: 'sendToPlugin',
+    action: actionUuid || '',
+    context: piContext(),
+    payload: { type: 'refresh' },
+  });
   requestState();
 });
 $('btnToast').addEventListener('click', () => {
-  send({ event: 'sendToPlugin', context: actionContext || pluginUUID, payload: { type: 'testToast' } });
+  send({
+    event: 'sendToPlugin',
+    action: actionUuid || '',
+    context: piContext(),
+    payload: { type: 'testToast' },
+  });
 });
-
-connect();
