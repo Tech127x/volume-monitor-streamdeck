@@ -19,7 +19,7 @@ const APP_KNOB_ACTION = 'com.tech127x.volume-monitor.appknob';
 
 let ws = null;
 let started = false;
-let pluginUUID = ''; // the plugin's UUID (from the info payload)
+let uiUuid = ''; // Stream Deck validates every command against this context
 let actionContext = null; // action instance context (null = global panel)
 let actionUuid = ''; // action type UUID ('' = global panel)
 let globalSettings = null; // last known full blob (keeps volumeMemory/knobSlots)
@@ -34,12 +34,10 @@ function start(port, uuid, registerEvent, info, actionInfo) {
   if (started) return;
   started = true;
 
-  try {
-    const infoObj = JSON.parse(info || '{}');
-    pluginUUID = (infoObj.plugin && infoObj.plugin.uuid) || uuid;
-  } catch {
-    pluginUUID = uuid;
-  }
+  // The uuid Stream Deck handed us is the context it will accept on our
+  // commands — NOT the manifest UUID (Stream Deck logs "wrong context"
+  // and silently drops the request otherwise).
+  uiUuid = uuid;
   try {
     const ai = JSON.parse(actionInfo || '');
     if (ai && ai.context) {
@@ -53,7 +51,7 @@ function start(port, uuid, registerEvent, info, actionInfo) {
   ws = new WebSocket('ws://127.0.0.1:' + port);
   ws.onopen = () => {
     ws.send(JSON.stringify({ event: registerEvent, uuid }));
-    ws.send(JSON.stringify({ event: 'getGlobalSettings', context: pluginUUID }));
+    ws.send(JSON.stringify({ event: 'getGlobalSettings', context: uiUuid }));
     if (actionContext) {
       ws.send(JSON.stringify({ event: 'getSettings', context: actionContext }));
     }
@@ -120,7 +118,7 @@ function collectGlobal() {
 }
 
 function saveGlobal() {
-  send({ event: 'setGlobalSettings', context: pluginUUID, payload: collectGlobal() });
+  send({ event: 'setGlobalSettings', context: uiUuid, payload: collectGlobal() });
   $('btnSaveGlobal').textContent = 'Saved';
   setTimeout(() => ($('btnSaveGlobal').textContent = 'Save global settings'), 1200);
 }
@@ -153,7 +151,7 @@ function saveAction() {
 // ---------------------------------------------------------------------------
 
 function piContext() {
-  return actionContext || pluginUUID;
+  return actionContext || uiUuid;
 }
 
 function requestState() {
