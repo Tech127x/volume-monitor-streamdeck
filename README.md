@@ -9,10 +9,11 @@ programs, no npm packages.
 Real-time audio control at your fingertips:
 
 - **Master volume dial** — device name + volume, rotate to adjust, press
-  the dial **or tap the screen above it** to mute.
+  the dial **or tap the screen above it** to mute. First run defaults to
+  **50%**, then it resumes whatever level you last set.
 - **Per-app volume knobs** — every playing app gets its own knob,
   automatically. Apps remember their volume; brand-new apps start at a safe
-  **50%**; close an app and the remaining knobs compact left.
+  **24%**; close an app and the remaining knobs compact left.
 - **Device toggle button** — cycles your audio output devices and shows the
   current one as the title, with a Windows toast on switch.
 
@@ -62,6 +63,9 @@ property inspector, or leave "Auto" and they are assigned in order).
 - Shows `Device name` + `NN%` with a volume indicator bar (red slash icon
   while muted, value reads `MUTED`).
 - Rotate adjusts the system volume by 2% per tick.
+- The first time it runs the master volume is set to a **50%** default;
+  afterwards it resumes whatever level you last had (nothing is capped or
+  forced after that).
 - Press the dial or **tap the touchscreen display** above it to
   mute/unmute.
 - When the default output device changes (e.g. Bluetooth headphones
@@ -81,8 +85,9 @@ property inspector, or leave "Auto" and they are assigned in order).
 - **Volume memory**: every app's level is remembered (stored in the
   plugin's global settings, keyed by app name). Close Spotify at 44% and
   it comes back at 44%.
-- **Safe defaults**: an app never seen before starts at **50%** — never a
-  surprise 100% blast.
+- **Safe defaults**: an app never seen before starts at **24%** — never a
+  surprise 100% blast. (Windows is louder per-percent than the Linux
+  original, so the default was lowered from 50%.)
 - **Restore on new stream**: if an app's remembered volume is below 95%
   and it opens a *new* audio session at 100%, the plugin restores the
   remembered level (with a verify loop — new sessions are flaky).
@@ -103,7 +108,9 @@ Open the action's settings panel:
 
 - **Excluded apps** — one pattern per line; any session whose app or
   display name contains a pattern is hidden from app knobs.
-- **Default volume** — level applied to never-before-seen apps (0–100).
+- **Default volume (new apps)** — level applied to apps seen for the
+  first time (0–100; default 24). Each app then remembers and resumes its
+  own level.
 - **Poll interval** — audio refresh rate in ms (50–5000; default 100).
 - **Notify on switch** — Windows toast when the output device changes.
 - **Knob slot** (app knob actions only) — fixed slot 2/3/4 or Auto.

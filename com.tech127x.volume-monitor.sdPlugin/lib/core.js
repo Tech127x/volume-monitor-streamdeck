@@ -41,13 +41,14 @@ const ACTIONS = {
 const APP_SLOT_FIRST = 2;
 const APP_SLOT_LAST = 4;
 const STREAM_VOLUME_RESTORE_HIGH = 95; // above this -> treat as "needs restore"
-const DEFAULT_NEW_APP_VOLUME = 50;
+const DEFAULT_NEW_APP_VOLUME = 24; // Linux's 50% is too loud on Windows
+const DEFAULT_MASTER_VOLUME = 50; // first-run default for the master volume
 const VOLUME_STEP_PER_TICK = 2;
 const RESTORE_ATTEMPTS = 6;
 
 const DEFAULT_SETTINGS = {
   excludeApps: ['svchost', 'audiodg', 'background', 'system sounds'],
-  defaultVolume: 50,
+  defaultVolume: 24, // new-app default (editable; each app resumes its own level)
   pollInterval: 100, // ms
   notifyOnSwitch: true,
   volumeMemory: {},
@@ -103,6 +104,7 @@ class VolumeMonitorCore {
 
     // State
     this.lastMaster = null; // { device, deviceId, muted, volume }
+    this._masterInitialized = false; // first-run default/resume applied once
     this.lastFeedback = new Map(); // context -> payload signature
     this.seenKeys = new Set();
     this.lastStreamIdByKey = new Map();
@@ -339,6 +341,9 @@ class VolumeMonitorCore {
     }
     if (!this.lastMaster) this.lastMaster = { device: null, deviceId: null, muted: false, volume: next };
     else this.lastMaster = Object.assign({}, this.lastMaster, { volume: next, muted: false });
+    // Remember the level so the next session resumes it.
+    this.settings.volumeMemory.master = next;
+    this._persistSettings();
     // Suppress poll overwrites for a short window so an in-flight poll with
     // a pre-rotate read cannot clobber the just-applied volume.
     this._masterSetAt = Date.now();
@@ -366,6 +371,37 @@ class VolumeMonitorCore {
     for (const [ctx, s] of this.slotForContext) {
       if (s === slot) this._pushAppFeedback(ctx, slot, stream);
     }
+  }
+
+  /**
+   * One-time master volume default/resume. First run (no remembered value):
+   * apply DEFAULT_MASTER_VOLUME. Afterwards: restore whatever the user last
+   * set via the dial. Returns the applied volume, or null when unchanged.
+   */
+  async _ensureMasterDefault(current) {
+    const remembered = this.settings.volumeMemory.master;
+    const target = clampVolume(remembered != null ? remembered : DEFAULT_MASTER_VOLUME);
+    if (target == null) return null;
+    if (current == null || Math.abs(current - target) <= 1) {
+      if (remembered == null) {
+        this.settings.volumeMemory.master = target;
+        this._persistSettings();
+      }
+      return null;
+    }
+    const res = await this.bridge.setVolume(target);
+    if (!res.ok) {
+      this._log('warn', 'master default set failed:', res.error);
+      return null;
+    }
+    this.settings.volumeMemory.master = target;
+    this._persistSettings();
+    this._log(
+      'info',
+      remembered == null ? 'master volume initialized to' : 'master volume resumed to',
+      target + '%'
+    );
+    return target;
   }
 
   async _toggleMasterMute() {
@@ -476,6 +512,14 @@ class VolumeMonitorCore {
       !this.lastMaster || this.lastMaster.deviceId !== state.deviceId;
     const first = !this.lastMaster;
     this.lastMaster = state;
+
+    // First run: apply the 50% master default; afterwards resume the level
+    // the user last set (once per session — no caps, nothing forced later).
+    if (!this._masterInitialized) {
+      this._masterInitialized = true;
+      const applied = await this._ensureMasterDefault(state.volume);
+      if (applied != null) state.volume = applied;
+    }
 
     if (deviceChanged && !first && this.settings.notifyOnSwitch && state.deviceId) {
       this._toast('Audio Output Switched', 'Changed to: ' + normDeviceName(state.device));

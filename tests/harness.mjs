@@ -183,7 +183,7 @@ async function main() {
   core.onEvent({
     event: 'didReceiveGlobalSettings',
     payload: {
-      settings: { excludeApps: ['svchost', 'audiodg', 'background', 'system sounds'], defaultVolume: 50, pollInterval: 100, notifyOnSwitch: true },
+      settings: { excludeApps: ['svchost', 'audiodg', 'background', 'system sounds'], pollInterval: 100, notifyOnSwitch: true },
     },
   });
 
@@ -206,31 +206,31 @@ async function main() {
   const fA2 = ws.lastFeedback('A2');
   const fA3 = ws.lastFeedback('A3');
   check('knob 2 shows Spotify', fA1 && fA1.payload.title === 'Spotify', fA1 && fA1.payload.title);
-  check('knob 2 volume 50% (safe default)', fA1 && fA1.payload.value === '50%', fA1 && fA1.payload.value);
+  check('knob 2 volume 24% (safe default)', fA1 && fA1.payload.value === '24%', fA1 && fA1.payload.value);
   check('knob 3 shows chrome tab title', fA2 && fA2.payload.title === 'chrome: YouTube - Best of 2026', fA2 && fA2.payload.title);
   check('knob 4 empty', fA3 && fA3.payload.value === '\u2014', fA3 && fA3.payload.value);
   check('layout is $B1', fA1 && fA1.payload.layout === '$B1', fA1 && fA1.payload.layout);
 
   const fM1 = ws.lastFeedback('M1');
   check('master shows device', fM1 && fM1.payload.title === 'Speakers', fM1 && fM1.payload.title);
-  check('master volume 40%', fM1 && fM1.payload.value === '40%', fM1 && fM1.payload.value);
-  check('master indicator 0.4', fM1 && Math.abs(fM1.payload.indicator - 0.4) < 0.01, fM1 && fM1.payload.indicator);
+  check('master volume 50% (first-run default)', fM1 && fM1.payload.value === '50%', fM1 && fM1.payload.value);
+  check('master indicator 0.5', fM1 && Math.abs(fM1.payload.indicator - 0.5) < 0.01, fM1 && fM1.payload.indicator);
 
   // --- 4. dialRotate on master (2% per tick) -------------------------------
   core.onEvent({ event: 'dialRotate', action: ACTIONS.MASTER, context: 'M1', payload: { ticks: 2 } });
   await core.flush();
-  check('master setvol to 44', bridge.master.volume === 44, 'got ' + bridge.master.volume);
-  check('master feedback 44%', ws.lastFeedback('M1').payload.value === '44%', ws.lastFeedback('M1').payload.value);
+  check('master setvol to 54 (from 50)', bridge.master.volume === 54, 'got ' + bridge.master.volume);
+  check('master feedback 54%', ws.lastFeedback('M1').payload.value === '54%', ws.lastFeedback('M1').payload.value);
 
   // --- 5. dialRotate on an app knob ----------------------------------------
   core.onEvent({ event: 'dialRotate', action: ACTIONS.APP_KNOB, context: 'A1', payload: { ticks: -3 } });
   await core.flush();
-  check('spotify volume 44', bridge.sessionList[0].volume === 44, 'got ' + bridge.sessionList[0].volume);
-  check('knob 2 feedback 44%', ws.lastFeedback('A1').payload.value === '44%', ws.lastFeedback('A1').payload.value);
+  check('spotify volume 18 (from 24%, -6)', bridge.sessionList[0].volume === 18, 'got ' + bridge.sessionList[0].volume);
+  check('knob 2 feedback 18%', ws.lastFeedback('A1').payload.value === '18%', ws.lastFeedback('A1').payload.value);
   const globalSaves = ws.all('setGlobalSettings');
   const lastSave = globalSaves[globalSaves.length - 1];
-  check('volume memory saved (spotify 44)',
-    lastSave && lastSave.payload && lastSave.payload.volumeMemory && lastSave.payload.volumeMemory.spotify === 44,
+  check('volume memory saved (spotify 18)',
+    lastSave && lastSave.payload && lastSave.payload.volumeMemory && lastSave.payload.volumeMemory.spotify === 18,
     JSON.stringify(lastSave && lastSave.payload));
 
   // --- 6. dialDown: mute master + app --------------------------------------
@@ -248,22 +248,22 @@ async function main() {
   core.onEvent({ event: 'touchTap', action: ACTIONS.MASTER, context: 'M1', payload: { hold: false, tapPos: [50, 50] } });
   await core.flush();
   check('touchTap unmutes master', bridge.master.muted === false, 'got ' + bridge.master.muted);
-  check('master feedback restored after tap', ws.lastFeedback('M1').payload.value === '44%', ws.lastFeedback('M1').payload.value);
+  check('master feedback restored after tap', ws.lastFeedback('M1').payload.value === '54%', ws.lastFeedback('M1').payload.value);
 
   core.onEvent({ event: 'touchTap', action: ACTIONS.APP_KNOB, context: 'A2', payload: { hold: false, tapPos: [50, 50] } });
   await core.flush();
   check('touchTap unmutes chrome session', bridge.sessionList[1].muted === false, 'got ' + bridge.sessionList[1].muted);
-  check('knob 3 feedback restored after tap', ws.lastFeedback('A2').payload.value === '50%', ws.lastFeedback('A2').payload.value);
+  check('knob 3 feedback restored after tap', ws.lastFeedback('A2').payload.value === '24%', ws.lastFeedback('A2').payload.value);
 
-  // --- 7. new app appears at 100% -> safe default of 50% --------------------
+  // --- 7. new app appears at 100% -> safe default of 24% --------------------
   bridge.sessionList.push({ id: 's3', app: 'Discord', display: '', pid: 300, volume: 100, muted: false });
   now += 100;
   await core.tick(now);
-  check('new app Discord defaulted to 50%', bridge.sessionList[2].volume === 50, 'got ' + bridge.sessionList[2].volume);
+  check('new app Discord defaulted to 24%', bridge.sessionList[2].volume === 24, 'got ' + bridge.sessionList[2].volume);
   check('Discord on knob 4', ws.lastFeedback('A3').payload.title === 'Discord', ws.lastFeedback('A3').payload.title);
 
   // Known app volume is NOT overwritten by the poll.
-  check('Spotify still 44 after poll', bridge.sessionList[0].volume === 44, 'got ' + bridge.sessionList[0].volume);
+  check('Spotify still 18 after poll', bridge.sessionList[0].volume === 18, 'got ' + bridge.sessionList[0].volume);
 
   // --- 8. app closes -> grace -> compaction --------------------------------
   bridge.sessionList = bridge.sessionList.filter((s) => s.id !== 's2'); // chrome gone

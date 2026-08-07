@@ -99,7 +99,7 @@ function onGlobalSettings(settings) {
 
 function populateGlobal(s) {
   $('excludeApps').value = Array.isArray(s.excludeApps) ? s.excludeApps.join('\n') : '';
-  $('defaultVolume').value = s.defaultVolume != null ? s.defaultVolume : 50;
+  $('defaultVolume').value = s.defaultVolume != null ? s.defaultVolume : 24;
   $('pollInterval').value = s.pollInterval != null ? s.pollInterval : 100;
   $('notifyOnSwitch').checked = s.notifyOnSwitch !== false;
   requestState();
@@ -111,7 +111,7 @@ function collectGlobal() {
     .value.split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
-  merged.defaultVolume = Number($('defaultVolume').value) || 50;
+  merged.defaultVolume = Number($('defaultVolume').value) || 24;
   merged.pollInterval = Number($('pollInterval').value) || 100;
   merged.notifyOnSwitch = $('notifyOnSwitch').checked;
   return merged;
