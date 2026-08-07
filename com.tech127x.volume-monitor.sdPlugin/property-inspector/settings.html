@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Volume Monitor</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <div class="sdpi-wrapper">
+    <div class="sdpi-heading">Global Settings</div>
+
+    <div class="sdpi-item" id="row-exclude">
+      <div class="sdpi-item-label">Excluded apps</div>
+      <div class="sdpi-item-value">
+        <textarea id="excludeApps" rows="4" spellcheck="false"
+          placeholder="svchost, audiodg, background, system sounds"></textarea>
+        <div class="sdpi-item-info">One pattern per line. App names containing a pattern are hidden from app knobs.</div>
+      </div>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Default volume</div>
+      <div class="sdpi-item-value">
+        <input type="number" id="defaultVolume" min="0" max="100" step="1" value="50" />
+        <div class="sdpi-item-info">Volume given to apps seen for the first time (0-100).</div>
+      </div>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Poll interval</div>
+      <div class="sdpi-item-value">
+        <input type="number" id="pollInterval" min="50" max="5000" step="50" value="100" />
+        <div class="sdpi-item-info">Milliseconds between audio refreshes. Lower = snappier.</div>
+      </div>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Notify on switch</div>
+      <div class="sdpi-item-value">
+        <label class="switch">
+          <input type="checkbox" id="notifyOnSwitch" checked />
+          <span class="slider"></span>
+        </label>
+        <div class="sdpi-item-info">Show a Windows toast when the output device changes.</div>
+      </div>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-value">
+        <button id="btnSaveGlobal" class="sdpi-button">Save global settings</button>
+      </div>
+    </div>
+
+    <div class="sdpi-heading" id="action-heading" style="display:none">This Action</div>
+
+    <div class="sdpi-item" id="row-knob" style="display:none">
+      <div class="sdpi-item-label">Knob slot</div>
+      <div class="sdpi-item-value">
+        <select id="knobSlot">
+          <option value="auto">Auto (first free)</option>
+          <option value="2">Knob 2</option>
+          <option value="3">Knob 3</option>
+          <option value="4">Knob 4</option>
+        </select>
+        <div class="sdpi-item-info">Which of the three app knobs this instance controls.</div>
+      </div>
+    </div>
+
+    <div class="sdpi-item" id="row-knob-save" style="display:none">
+      <div class="sdpi-item-value">
+        <button id="btnSaveAction" class="sdpi-button">Save action settings</button>
+      </div>
+    </div>
+
+    <div class="sdpi-heading">Status</div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-value">
+        <div id="statusText">Loading...</div>
+      </div>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-value">
+        <button id="btnRefresh" class="sdpi-button">Refresh</button>
+        <button id="btnToast" class="sdpi-button">Test notification</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

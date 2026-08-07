@@ -1,0 +1,129 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #e5e5e5;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+}
+
+.sdpi-wrapper {
+  padding: 10px 12px 20px;
+}
+
+.sdpi-heading {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8ab4f8;
+}
+
+.sdpi-item {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.sdpi-item-label {
+  width: 118px;
+  flex: 0 0 118px;
+  padding-top: 6px;
+  color: #c8c8c8;
+}
+
+.sdpi-item-value {
+  flex: 1;
+}
+
+.sdpi-item-info {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8a8a8a;
+}
+
+textarea,
+input[type="number"],
+select {
+  width: 100%;
+  box-sizing: border-box;
+  background: #2a2d34;
+  border: 1px solid #454a54;
+  border-radius: 4px;
+  color: #fff;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+textarea {
+  resize: vertical;
+  font-family: Consolas, monospace;
+}
+
+.sdpi-button {
+  background: #3d8bfd;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.sdpi-button:hover {
+  background: #2f74dd;
+}
+
+/* Toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #454a54;
+  border-radius: 24px;
+  transition: background 0.15s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+
+.switch input:checked + .slider {
+  background: #3d8bfd;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+#statusText {
+  background: #20232a;
+  border: 1px solid #3a3f4a;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 12px;
+  min-height: 18px;
+}

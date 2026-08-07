@@ -1,0 +1,88 @@
+{
+  "Actions": [
+    {
+      "Icon": "imgs/master.png",
+      "Name": "Master Volume",
+      "Controllers": ["Encoder"],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Adjust system volume",
+          "Push": "Mute / unmute"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/master.png",
+          "TitleAlignment": "middle",
+          "FontSize": "16"
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "Tooltip": "Shows the current audio device and volume. Rotate to adjust, press to mute.",
+      "UUID": "com.tech127x.volume-monitor.master",
+      "PropertyInspectorPath": "property-inspector/settings.html"
+    },
+    {
+      "Icon": "imgs/appknob.png",
+      "Name": "App Volume Knob",
+      "Controllers": ["Encoder"],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Adjust this app's volume",
+          "Push": "Mute / unmute this app"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/appknob.png",
+          "TitleAlignment": "middle",
+          "FontSize": "16"
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "Tooltip": "Auto-assigns a playing app to this knob. Apps remember their volume; new apps start at 50%.",
+      "UUID": "com.tech127x.volume-monitor.appknob",
+      "PropertyInspectorPath": "property-inspector/settings.html"
+    },
+    {
+      "Icon": "imgs/toggle.png",
+      "Name": "Toggle Audio Device",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/toggle.png",
+          "TitleAlignment": "middle",
+          "FontSize": "14"
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "Tooltip": "Cycles to the next audio output device. Shows the current device as the title.",
+      "UUID": "com.tech127x.volume-monitor.toggle",
+      "PropertyInspectorPath": "property-inspector/settings.html"
+    }
+  ],
+  "Author": "Tech127x",
+  "Category": "Volume Monitor",
+  "CategoryIcon": "imgs/category.png",
+  "CodePath": "plugin.js",
+  "Description": "Real-time master and per-app volume control with automatic knob assignment, volume memory, safe 50% defaults for new apps, and one-tap device switching. Port of the volume-monitor project as a native Stream Deck plugin (no Companion, no Python).",
+  "Name": "Volume Monitor",
+  "Icon": "imgs/category.png",
+  "URL": "https://github.com/Tech127x/volume-monitor-streamdeck",
+  "Version": "1.0.0",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "7.1"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "24"
+  }
+}
