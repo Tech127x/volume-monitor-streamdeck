@@ -105,6 +105,7 @@ class VolumeMonitorCore {
     // State
     this.lastMaster = null; // { device, deviceId, muted, volume }
     this._masterInitialized = false; // first-run default/resume applied once
+    this._settingsLoaded = false; // true once didReceiveGlobalSettings arrives
     this.lastFeedback = new Map(); // context -> payload signature
     this.seenKeys = new Set();
     this.lastStreamIdByKey = new Map();
@@ -286,6 +287,13 @@ class VolumeMonitorCore {
     if (!this.settings.volumeMemory) this.settings.volumeMemory = {};
     if (!this.settings.knobSlots) this.settings.knobSlots = {};
     this.memory = new VolumeMemory(this.settings, () => this._persistSettings());
+    if (!this._settingsLoaded) {
+      // First load: mark ready and write the merged view back once. Until
+      // this point every persist is suppressed, so the plugin can never
+      // clobber the user's stored settings with its startup defaults.
+      this._settingsLoaded = true;
+      this._persistSettings();
+    }
     this._log('info', 'global settings applied:', {
       excludeApps: this.settings.excludeApps,
       defaultVolume: this.settings.defaultVolume,
@@ -818,6 +826,10 @@ class VolumeMonitorCore {
   // ------------------------------------------------------------------
 
   _persistSettings() {
+    // Never write before the stored settings have been received — doing so
+    // would overwrite the user's saved settings (e.g. excluded apps) with
+    // the plugin's startup defaults.
+    if (!this._settingsLoaded) return;
     this._send({ event: 'setGlobalSettings', context: this.pluginUUID, payload: this.settings });
   }
 
