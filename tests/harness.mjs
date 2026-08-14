@@ -443,6 +443,16 @@ async function main() {
   await core2.tick(now);
   check('router: falls back to bridge sessions when unavailable', ws2.lastFeedback('R-A1').payload.title === 'Spotify', ws2.lastFeedback('R-A1').payload.title);
 
+  // Fallback: router is connected but reports zero apps -> the bridge must
+  // still be consulted instead of blanking the knobs (wedged/just-started
+  // router).
+  router.available = true;
+  router.apps = [];
+  now += 600;
+  bridge.sessionList = [{ id: 's10', app: 'Spotify', display: '', pid: 0, volume: 41, muted: false }];
+  await core2.tick(now);
+  check('router: falls back to bridge sessions when it reports zero apps', ws2.lastFeedback('R-A1').payload.title === 'Spotify', ws2.lastFeedback('R-A1').payload.title);
+
   // --------------------------------------------------------------------------
   console.log('\n' + (failed === 0 ? 'ALL TESTS PASSED' : failed + ' TEST(S) FAILED') + `  (${passed} passed, ${failed} failed)`);
   process.exit(failed === 0 ? 0 : 1);

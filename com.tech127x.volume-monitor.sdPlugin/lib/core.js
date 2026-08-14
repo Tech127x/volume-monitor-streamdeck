@@ -549,8 +549,11 @@ class VolumeMonitorCore {
       }
     }
 
-    // Fallback: heuristic session enumeration through the bridge.
-    if (!streams) {
+    // Fallback: heuristic session enumeration through the bridge. Also used
+    // when the router answered but listed no apps: a just-started or wedged
+    // router can report zero while the bridge still sees real sessions, and
+    // an empty router result must not blank the app knobs.
+    if (!streams || streams.length === 0) {
       const res = await this.bridge.sessions();
       if (!res.ok || !Array.isArray(res.sessions)) {
         this._log('warn', 'sessions failed:', res.error);

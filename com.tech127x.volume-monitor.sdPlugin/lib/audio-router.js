@@ -13,7 +13,9 @@
  * forgotten; the caller verifies by reading back.
  *
  * If the service is installed (Run key "Volume Controller SD plugin") but
- * not running, connect() kicks its watcher once, best-effort.
+ * not running, connect() kicks its watcher, best-effort, and keeps retrying
+ * (spaced out) while the router stays down so a crashed service recovers
+ * without waiting for a plugin restart.
  */
 
 const { spawn, execFile } = require('node:child_process');
@@ -25,6 +27,7 @@ const RUN_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 const RUN_VALUE = 'Volume Controller SD plugin';
 const CONNECT_TIMEOUT_MS = 2000;
 const RPC_TIMEOUT_MS = 4000;
+const KICK_RETRY_MS = 60000; // re-kick the watcher at most once a minute
 
 class AudioRouter {
   /**
@@ -39,7 +42,7 @@ class AudioRouter {
     this._id = 0;
     this._pending = new Map(); // id -> { resolve, reject }
     this._connectPromise = null;
-    this._kicked = false;
+    this._lastKick = 0;
   }
 
   _log(level, ...args) {
@@ -207,8 +210,13 @@ class AudioRouter {
    * lets an async spawn error escape.
    */
   _kickWatcher() {
-    if (this._kicked) return;
-    this._kicked = true;
+    // The router can die at any time; retry while it stays down instead of
+    // giving up after the first attempt. Safe because the kick only fires
+    // when nothing is listening on the router port, so at most one watcher
+    // spawn per minute and never while the server is already up.
+    const now = Date.now();
+    if (this._lastKick && now - this._lastKick < KICK_RETRY_MS) return;
+    this._lastKick = now;
     execFile('reg', ['query', RUN_KEY, '/v', RUN_VALUE], { windowsHide: true }, (err, stdout) => {
       if (err) {
         this._log('debug', 'no Volume Controller Run key (router not installed)');
