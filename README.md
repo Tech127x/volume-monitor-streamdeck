@@ -177,12 +177,12 @@ Session identification note: `IAudioSessionControl2` (process ids, instance
 identifiers) is not exposed by the cross-process session controls on this
 Windows build, so the bridge derives the app name from the session icon
 path (the exe path for real applications) and keys each session by
-`app|grouping-guid`. Sessions with no app and no display name are system
-sessions only when they sit at exactly 100% volume and are silent; unnamed
-sessions that are audible or below 100% are shown as generic **App** knobs
-(some VST hosts and games never set a session name). Unnamed sessions are
-never auto-adjusted (no safe default / restore), so system sessions are
-never modified.
+`app|grouping-guid`. Sessions with no app and no display name are treated
+as real apps only when they are actually producing sound; such unnamed
+sessions are shown as generic **App** knobs (some VST hosts and games
+never set a session name). Silent unnamed sessions (console hosts and
+other system noise) stay hidden. Unnamed sessions are never auto-adjusted
+(no safe default / restore), so system sessions are never modified.
 
 Toasts use the one-shot mode of the same script:
 

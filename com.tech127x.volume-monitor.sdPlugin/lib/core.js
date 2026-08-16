@@ -775,7 +775,7 @@ class VolumeMonitorCore {
       this._sendFeedback(context, {
         layout: '$B1',
         icon: this.icons.wave,
-        title: '',
+        title: '\u00A0', // NBSP: a truly empty title reverts to the action name
         value: '\u2014',
         indicator: 0,
       });

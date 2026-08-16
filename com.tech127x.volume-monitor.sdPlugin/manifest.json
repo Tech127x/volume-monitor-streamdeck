@@ -37,6 +37,7 @@
       "States": [
         {
           "Image": "imgs/appknob.png",
+          "Title": "\u00A0",
           "TitleAlignment": "middle",
           "FontSize": "16"
         }

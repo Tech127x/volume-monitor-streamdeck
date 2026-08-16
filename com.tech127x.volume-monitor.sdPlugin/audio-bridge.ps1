@@ -535,34 +535,26 @@ namespace VolumeMonitorBridge
                 string app = StripExePath(icon);
 
                 // Some real apps (e.g. VST hosts, players) never set a session
-                // icon or display name. System sessions (audiodg, the
-                // Background session, System Sounds) sit at 100% volume and
-                // are silent. Treat an unnamed session as a real app when its
-                // volume is not pinned to 100 or it is producing sound.
+                // icon or display name. Only count an unnamed session as a real
+                // app when it is actually producing sound: the old "volume not
+                // pinned to 100%" heuristic made silent system sessions (e.g.
+                // console hosts) show up as generic "App" knobs, and the
+                // plugin's own safe default then lowered their volume, which
+                // kept them looking like real apps forever.
                 bool isRealApp = false;
                 float peak = 0f;
                 if (app.Length == 0 && display.Length == 0)
                 {
-                    ISimpleAudioVolume v0 = ctl as ISimpleAudioVolume;
-                    if (v0 != null)
+                    IAudioMeterInformation meter = ctl as IAudioMeterInformation;
+                    if (meter != null)
                     {
-                        float lv;
-                        v0.GetMasterVolume(out lv);
-                        if (lv < 0.999f) isRealApp = true;
-                    }
-                    if (!isRealApp)
-                    {
-                        IAudioMeterInformation meter = ctl as IAudioMeterInformation;
-                        if (meter != null)
+                        try
                         {
-                            try
-                            {
-                                meter.GetPeakValue(out peak);
-                                if (peak > 0.001f) isRealApp = true;
-                            }
-                            catch
-                            {
-                            }
+                            meter.GetPeakValue(out peak);
+                            if (peak > 0.001f) isRealApp = true;
+                        }
+                        catch
+                        {
                         }
                     }
                     if (isRealApp) display = "App";
