@@ -4,3 +4,7 @@ tools/elgato-app-icon.png
 # Windows noise
 Thumbs.db
 Desktop.ini
+
+# Node / generated package
+node_modules/
+*.streamDeckPlugin

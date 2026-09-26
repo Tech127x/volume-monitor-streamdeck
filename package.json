@@ -1,0 +1,10 @@
+{
+  "name": "volume-monitor-streamdeck",
+  "private": true,
+  "scripts": {
+    "package": "streamdeck pack com.tech127x.volume-monitor.sdPlugin"
+  },
+  "devDependencies": {
+    "@elgato/cli": "1.10.0"
+  }
+}

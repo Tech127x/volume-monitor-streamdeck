@@ -1,0 +1,9 @@
+# Development-only source assets; runtime uses the generated PNG files.
+
+
+# Local/editor/OS artifacts.
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+Desktop.ini

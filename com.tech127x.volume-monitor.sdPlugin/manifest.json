@@ -1,9 +1,11 @@
 {
   "Actions": [
     {
-      "Icon": "imgs/master.png",
+      "Icon": "imgs/master",
       "Name": "Master Volume",
-      "Controllers": ["Encoder"],
+      "Controllers": [
+        "Encoder"
+      ],
       "Encoder": {
         "layout": "$B1",
         "TriggerDescription": {
@@ -13,9 +15,9 @@
       },
       "States": [
         {
-          "Image": "imgs/master.png",
+          "Image": "imgs/master",
           "TitleAlignment": "middle",
-          "FontSize": "16"
+          "FontSize": 16
         }
       ],
       "SupportedInMultiActions": false,
@@ -24,9 +26,11 @@
       "PropertyInspectorPath": "property-inspector/settings.html"
     },
     {
-      "Icon": "imgs/appknob.png",
+      "Icon": "imgs/appknob",
       "Name": "App Volume Knob",
-      "Controllers": ["Encoder"],
+      "Controllers": [
+        "Encoder"
+      ],
       "Encoder": {
         "layout": "$B1",
         "TriggerDescription": {
@@ -36,10 +40,10 @@
       },
       "States": [
         {
-          "Image": "imgs/appknob.png",
-          "Title": "\u00A0",
+          "Image": "imgs/appknob",
+          "Title": " ",
           "TitleAlignment": "middle",
-          "FontSize": "16"
+          "FontSize": 16
         }
       ],
       "SupportedInMultiActions": false,
@@ -48,14 +52,16 @@
       "PropertyInspectorPath": "property-inspector/settings.html"
     },
     {
-      "Icon": "imgs/toggle.png",
+      "Icon": "imgs/toggle",
       "Name": "Toggle Audio Device",
-      "Controllers": ["Keypad"],
+      "Controllers": [
+        "Keypad"
+      ],
       "States": [
         {
-          "Image": "imgs/toggle.png",
+          "Image": "imgs/toggle",
           "TitleAlignment": "middle",
-          "FontSize": "14"
+          "FontSize": 14
         }
       ],
       "SupportedInMultiActions": false,
@@ -65,14 +71,15 @@
     }
   ],
   "Author": "Tech127x",
+  "UUID": "com.tech127x.volume-monitor",
   "Category": "Volume Monitor",
-  "CategoryIcon": "imgs/category.png",
+  "CategoryIcon": "imgs/category",
   "CodePath": "plugin.js",
   "Description": "Real-time master and per-app volume control with automatic knob assignment, volume memory, safe 50% defaults for new apps, and one-tap device switching. Port of the volume-monitor project as a native Stream Deck plugin (no Companion, no Python).",
   "Name": "Volume Monitor",
-  "Icon": "imgs/category.png",
+  "Icon": "imgs/category",
   "URL": "https://github.com/Tech127x/volume-monitor-streamdeck",
-  "Version": "1.0.0",
+  "Version": "1.0.0.0",
   "SDKVersion": 2,
   "Software": {
     "MinimumVersion": "7.1"
