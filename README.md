@@ -2,9 +2,9 @@
 
 A native **Stream Deck+ plugin** that brings the features of the
 [`volume-monitor`](https://github.com/Tech127x/volume-monitor) project to the
-Elgato Stream Deck software. It is fully **standalone** — it needs nothing
-but the Stream Deck app: no Bitfocus Companion, no Python, no external
-programs, no npm packages.
+Elgato Stream Deck software. It is fully **standalone at runtime** — it needs
+no Bitfocus Companion, Python, external programs, or application npm
+packages.
 
 Real-time audio control at your fingertips:
 
@@ -25,35 +25,60 @@ script that speaks to the Windows Core Audio API through C# COM interop.
 
 ## Requirements
 
+For using the packaged plugin:
+
 - Windows 10 or 11 (64-bit)
 - Elgato Stream Deck software **7.1 or newer** (SDK 2)
 - PowerShell **5.1** (built into Windows — no install needed)
-- Stream Deck+ hardware (dials for the volume knobs, keypad for the toggle)
+- Stream Deck+ hardware: use its dials for the volume actions and one of its
+  keypad buttons for Toggle Audio Device
 
 The plugin requests Node.js **24** in its manifest (`Nodejs.Version`); the
 Stream Deck software downloads that runtime automatically on first run.
+
+The optional Elgato Volume Controller service provides richer per-app names
+and icons. If it is unavailable, the plugin falls back to Windows audio
+session detection; master volume and device switching do not depend on it.
+
+For development and packaging, also install Node.js **24 or newer** and npm.
+The repository uses npm only for the development CLI; the plugin itself has no
+runtime npm dependencies.
 
 ---
 
 ## Install
 
+### From the packaged plugin
+
+Open `com.tech127x.volume-monitor.streamDeckPlugin` with Stream Deck to
+install the plugin. After installation, restart Stream Deck if prompted, then
+search for **Volume Monitor** in the action list.
+
+The package contains these actions:
+
+| Action | Hardware | What it does |
+| ------ | -------- | ------------ |
+| **Master Volume** | Stream Deck+ dial | Shows the current device and volume. Rotate = volume, press or tap = mute. |
+| **App Volume Knob** | Stream Deck+ dial (up to 3) | Auto-assigns a playing app. Rotate = that app's volume, press or tap = mute that app. |
+| **Toggle Audio Device** | Stream Deck keypad button | Cycles to the next output device; the title shows the current device. |
+
+The three app knobs map to knob slots 2–4. Set a fixed slot in the action's
+property inspector, or leave it on **Auto** to assign the first free slot.
+These actions are not supported in Multi Actions.
+
+### Developer installation
+
+From a checkout of this repository, run:
+
 ```powershell
-cd volume-monitor-streamdeck
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-The installer copies `com.tech127x.volume-monitor.sdPlugin` into
-`%APPDATA%\Elgato\StreamDeck\Plugins\`. Restart Stream Deck (tray icon →
-Quit, then reopen), then search for **Volume Monitor** in the action list:
-
-| Action | Where | What it does |
-| ------ | ----- | ------------ |
-| **Master Volume** | a dial | Shows the current device + volume. Rotate = volume, press or tap = mute. |
-| **App Volume Knob** | a dial (up to 3) | Auto-assigns a playing app. Rotate = that app's volume, press or tap = mute that app. |
-| **Toggle Audio Device** | a keypad button | Cycles to the next output device; the title shows the current device. |
-
-The three app knobs map to knob slots 2–4 (set a fixed slot in the action's
-property inspector, or leave "Auto" and they are assigned in order).
+`install.ps1` closes Stream Deck if necessary, copies
+`com.tech127x.volume-monitor.sdPlugin` into
+`%APPDATA%\Elgato\StreamDeck\Plugins\`, and tells you when to restart Stream
+Deck. This installs the unpacked development folder rather than the packaged
+`.streamDeckPlugin` file.
 
 ---
 
@@ -228,6 +253,29 @@ node tools/make-icons.mjs --check   # decode + pixel-verify every PNG
 ---
 
 ## Development & validation
+
+### Packaging
+
+The package command uses the pinned `@elgato/cli` in `package.json`:
+
+```powershell
+npm install
+npm run package
+```
+
+This writes `com.tech127x.volume-monitor.streamDeckPlugin` in the repository
+root. If that output already exists, use the CLI's force option to overwrite
+it:
+
+```powershell
+npm run package -- --force
+```
+
+The command validates the manifest and reports asset warnings before creating
+the package. Do not use `--force` unless overwriting the existing generated
+package is intentional.
+
+### Validation
 
 ```powershell
 # 1. Regenerate + verify icons
